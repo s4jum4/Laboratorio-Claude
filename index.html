@@ -1,0 +1,531 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Crypto Dashboard</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:        #07070e;
+      --glow-a:    #ff1f6e;
+      --glow-b:    #c0001e;
+      --glow-c:    #6600aa;
+      --card-bg:   rgba(255,255,255,0.04);
+      --card-border: rgba(255,255,255,0.08);
+      --card-hover-bg: rgba(255,255,255,0.07);
+      --text:      #ffffff;
+      --muted:     #8888aa;
+      --accent:    #ff1f6e;
+    }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Inter", "Segoe UI", sans-serif;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      overflow-x: hidden;
+    }
+
+    /* ── Aurora background ── */
+    .aurora {
+      pointer-events: none;
+      position: fixed;
+      inset: 0;
+      z-index: 0;
+    }
+    .aurora::before {
+      content: "";
+      position: absolute;
+      top: -20%;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 900px;
+      height: 600px;
+      background: radial-gradient(ellipse at center,
+        rgba(255,31,110,0.35) 0%,
+        rgba(192,0,30,0.22) 35%,
+        rgba(102,0,170,0.10) 60%,
+        transparent 75%
+      );
+      border-radius: 50%;
+      filter: blur(60px);
+      animation: drift 12s ease-in-out infinite alternate;
+    }
+    .aurora::after {
+      content: "";
+      position: absolute;
+      top: 5%;
+      left: 30%;
+      width: 500px;
+      height: 350px;
+      background: radial-gradient(ellipse at center,
+        rgba(255,60,40,0.18) 0%,
+        transparent 70%
+      );
+      filter: blur(80px);
+      animation: drift 18s ease-in-out infinite alternate-reverse;
+    }
+    @keyframes drift {
+      from { transform: translateX(-50%) translateY(0) scaleX(1); }
+      to   { transform: translateX(-48%) translateY(30px) scaleX(1.06); }
+    }
+
+    /* ── Nav ── */
+    nav {
+      position: relative;
+      z-index: 10;
+      width: 100%;
+      max-width: 1100px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 1.6rem 2rem;
+    }
+    .nav-logo {
+      display: flex;
+      align-items: center;
+      gap: 0.55rem;
+    }
+    .nav-logo-mark {
+      width: 28px;
+      height: 28px;
+      border-radius: 7px;
+      background: linear-gradient(135deg, var(--glow-a), var(--glow-b));
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.75rem;
+      font-weight: 800;
+      color: #fff;
+      letter-spacing: -0.03em;
+    }
+    .nav-logo-text {
+      font-size: 0.9rem;
+      font-weight: 600;
+      letter-spacing: -0.01em;
+      color: var(--text);
+    }
+    .nav-links {
+      display: flex;
+      gap: 1.8rem;
+      list-style: none;
+    }
+    .nav-links a {
+      color: var(--muted);
+      text-decoration: none;
+      font-size: 0.82rem;
+      letter-spacing: 0.02em;
+      transition: color 0.2s;
+    }
+    .nav-links a:hover { color: var(--text); }
+
+    /* ── Main content ── */
+    main {
+      position: relative;
+      z-index: 10;
+      width: 100%;
+      max-width: 1000px;
+      padding: 2rem 2rem 4rem;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    header {
+      text-align: center;
+      margin-bottom: 3.5rem;
+    }
+    .eyebrow {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+      font-size: 0.72rem;
+      font-weight: 600;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--accent);
+      margin-bottom: 1rem;
+      padding: 0.3rem 0.9rem;
+      border: 1px solid rgba(255,31,110,0.25);
+      border-radius: 980px;
+      background: rgba(255,31,110,0.07);
+    }
+    .eyebrow::before {
+      content: "";
+      width: 5px;
+      height: 5px;
+      border-radius: 50%;
+      background: var(--accent);
+      box-shadow: 0 0 6px var(--accent);
+    }
+    header h1 {
+      font-size: clamp(2.2rem, 5vw, 3.4rem);
+      font-weight: 700;
+      letter-spacing: -0.04em;
+      line-height: 1.1;
+      background: linear-gradient(160deg, #ffffff 0%, rgba(255,255,255,0.55) 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    header p {
+      color: var(--muted);
+      margin-top: 0.75rem;
+      font-size: 0.9rem;
+      letter-spacing: 0.01em;
+    }
+
+    /* ── Cards ── */
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(285px, 1fr));
+      gap: 1.2rem;
+      width: 100%;
+    }
+
+    .card {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 22px;
+      padding: 2rem;
+      cursor: pointer;
+      position: relative;
+      overflow: hidden;
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      transition: transform 0.28s ease, background 0.28s ease, box-shadow 0.28s ease, border-color 0.28s ease;
+      user-select: none;
+    }
+
+    /* top stripe */
+    .card::before {
+      content: "";
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 2px;
+      border-radius: 22px 22px 0 0;
+      background: linear-gradient(90deg, transparent, var(--stripe), transparent);
+      opacity: 0.7;
+      transition: opacity 0.3s;
+    }
+    /* inner glow blob */
+    .card::after {
+      content: "";
+      position: absolute;
+      top: -40px; left: -40px;
+      width: 160px;
+      height: 160px;
+      border-radius: 50%;
+      background: radial-gradient(circle, var(--blob), transparent 70%);
+      opacity: 0;
+      transition: opacity 0.35s ease;
+      pointer-events: none;
+    }
+
+    .card:hover {
+      background: var(--card-hover-bg);
+      transform: translateY(-5px);
+      box-shadow: 0 24px 70px rgba(0,0,0,0.55), 0 0 0 1px var(--stripe-border);
+      border-color: transparent;
+    }
+    .card:hover::before { opacity: 1; }
+    .card:hover::after  { opacity: 1; }
+    .card:active { transform: scale(0.975) translateY(-2px); }
+
+    .card.btc { --stripe: #ff3d6e; --stripe-border: rgba(255,61,110,0.3); --blob: rgba(255,31,110,0.18); }
+    .card.eth { --stripe: #ff5040; --stripe-border: rgba(255,80,64,0.3);  --blob: rgba(255,80,40,0.18); }
+    .card.sol { --stripe: #c03aff; --stripe-border: rgba(192,58,255,0.3); --blob: rgba(160,0,220,0.18); }
+
+    .card-top {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 1.75rem;
+    }
+    .coin-left { display: flex; align-items: center; gap: 0.8rem; }
+
+    .icon {
+      width: 42px;
+      height: 42px;
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.15rem;
+      font-weight: 800;
+      flex-shrink: 0;
+    }
+    .btc .icon { background: rgba(255,31,110,0.12); color: #ff3d6e; border: 1px solid rgba(255,61,110,0.2); }
+    .eth .icon { background: rgba(255,80,40,0.12);  color: #ff5040; border: 1px solid rgba(255,80,64,0.2); }
+    .sol .icon { background: rgba(160,0,220,0.12);  color: #c03aff; border: 1px solid rgba(192,58,255,0.2); }
+
+    .coin-meta { display: flex; flex-direction: column; }
+    .coin-name   { font-size: 0.95rem; font-weight: 600; color: var(--text); letter-spacing: -0.01em; }
+    .coin-ticker { font-size: 0.72rem; color: var(--muted); letter-spacing: 0.06em; text-transform: uppercase; margin-top: 1px; }
+
+    .badge {
+      font-size: 0.7rem;
+      font-weight: 600;
+      letter-spacing: 0.04em;
+      padding: 0.22rem 0.6rem;
+      border-radius: 980px;
+      background: rgba(255,255,255,0.06);
+      color: var(--muted);
+      border: 1px solid rgba(255,255,255,0.08);
+    }
+
+    .price {
+      font-size: clamp(2rem, 3.5vw, 2.6rem);
+      font-weight: 700;
+      letter-spacing: -0.04em;
+      line-height: 1;
+      color: var(--text);
+    }
+    .price-label {
+      font-size: 0.75rem;
+      color: var(--muted);
+      margin-top: 0.35rem;
+      letter-spacing: 0.03em;
+    }
+    .hint {
+      margin-top: 1.5rem;
+      font-size: 0.72rem;
+      color: rgba(255,255,255,0.18);
+      letter-spacing: 0.03em;
+      display: flex;
+      align-items: center;
+      gap: 0.3rem;
+    }
+    .hint::after {
+      content: "›";
+      font-size: 1rem;
+      line-height: 1;
+      opacity: 0.5;
+    }
+
+    /* ── Modal ── */
+    .overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(7,7,14,0.8);
+      backdrop-filter: blur(18px);
+      -webkit-backdrop-filter: blur(18px);
+      z-index: 200;
+      align-items: center;
+      justify-content: center;
+      padding: 1.5rem;
+    }
+    .overlay.active { display: flex; }
+
+    .modal {
+      background: rgba(18,18,30,0.95);
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 28px;
+      padding: 2.75rem 2.5rem;
+      max-width: 420px;
+      width: 100%;
+      text-align: center;
+      position: relative;
+      overflow: hidden;
+      animation: popIn 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+    .modal::before {
+      content: "";
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 1px;
+      background: linear-gradient(90deg, transparent, rgba(255,31,110,0.6), transparent);
+    }
+
+    @keyframes popIn {
+      from { opacity: 0; transform: scale(0.85) translateY(24px); }
+      to   { opacity: 1; transform: scale(1) translateY(0); }
+    }
+
+    .modal-emoji { font-size: 3rem; margin-bottom: 1rem; display: block; }
+    .modal h2 {
+      font-size: 1.2rem;
+      font-weight: 700;
+      margin-bottom: 0.7rem;
+      letter-spacing: -0.025em;
+      color: var(--text);
+    }
+    .modal p {
+      color: var(--muted);
+      font-size: 0.88rem;
+      line-height: 1.65;
+    }
+    .disclaimer {
+      margin-top: 1rem !important;
+      font-size: 0.68rem !important;
+      color: rgba(255,255,255,0.18) !important;
+      font-style: italic;
+    }
+    .modal button {
+      margin-top: 2rem;
+      background: linear-gradient(135deg, var(--glow-a), var(--glow-b));
+      color: #fff;
+      border: none;
+      border-radius: 980px;
+      padding: 0.72rem 2.2rem;
+      font-size: 0.88rem;
+      font-weight: 600;
+      cursor: pointer;
+      letter-spacing: 0.01em;
+      transition: opacity 0.2s, transform 0.2s;
+    }
+    .modal button:hover { opacity: 0.85; transform: scale(1.03); }
+
+    /* ── Footer ── */
+    footer {
+      position: relative;
+      z-index: 10;
+      margin-top: 0.5rem;
+      padding-bottom: 2.5rem;
+      color: rgba(255,255,255,0.15);
+      font-size: 0.72rem;
+      text-align: center;
+      letter-spacing: 0.03em;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="aurora" aria-hidden="true"></div>
+
+  <nav>
+    <div class="nav-logo">
+      <div class="nav-logo-mark">C</div>
+      <span class="nav-logo-text">CryptoPulse</span>
+    </div>
+    <ul class="nav-links">
+      <li><a href="#">Mercados</a></li>
+      <li><a href="#">Tendencias</a></li>
+      <li><a href="#">Portafolio</a></li>
+    </ul>
+  </nav>
+
+  <main>
+    <header>
+      <div class="eyebrow">En vivo &mdash; 25 mar 2026</div>
+      <h1>Precios de Criptomonedas</h1>
+      <p>Haz clic en una tarjeta para recibir un consejo de inversion</p>
+    </header>
+
+    <div class="grid">
+
+      <div class="card btc" onclick="showTip('btc')">
+        <div class="card-top">
+          <div class="coin-left">
+            <div class="icon">&#8383;</div>
+            <div class="coin-meta">
+              <span class="coin-name">Bitcoin</span>
+              <span class="coin-ticker">BTC</span>
+            </div>
+          </div>
+          <span class="badge">&#x23;</span>
+        </div>
+        <div class="price">$70,610</div>
+        <div class="price-label">USD por unidad</div>
+        <div class="hint">Consejo de inversion</div>
+      </div>
+
+      <div class="card eth" onclick="showTip('eth')">
+        <div class="card-top">
+          <div class="coin-left">
+            <div class="icon">&#9830;</div>
+            <div class="coin-meta">
+              <span class="coin-name">Ethereum</span>
+              <span class="coin-ticker">ETH</span>
+            </div>
+          </div>
+          <span class="badge">&#x23;</span>
+        </div>
+        <div class="price">$2,157</div>
+        <div class="price-label">USD por unidad</div>
+        <div class="hint">Consejo de inversion</div>
+      </div>
+
+      <div class="card sol" onclick="showTip('sol')">
+        <div class="card-top">
+          <div class="coin-left">
+            <div class="icon">&#9711;</div>
+            <div class="coin-meta">
+              <span class="coin-name">Solana</span>
+              <span class="coin-ticker">SOL</span>
+            </div>
+          </div>
+          <span class="badge">&#x23;</span>
+        </div>
+        <div class="price">$90.99</div>
+        <div class="price-label">USD por unidad</div>
+        <div class="hint">Consejo de inversion</div>
+      </div>
+
+    </div>
+  </main>
+
+  <footer>Fuente: CoinMarketCap &middot; No es asesoramiento financiero</footer>
+
+  <!-- Modal -->
+  <div class="overlay" id="overlay" onclick="closeModal(event)">
+    <div class="modal">
+      <span class="modal-emoji" id="modal-emoji"></span>
+      <h2 id="modal-title"></h2>
+      <p id="modal-body"></p>
+      <p class="disclaimer">* Esto es completamente una broma. No soy tu asesor financiero.</p>
+      <button onclick="closeOverlay()">Entendido, gracias</button>
+    </div>
+  </div>
+
+  <script>
+    const tips = {
+      btc: [
+        { emoji: "🧙", title: "Hodl hasta Marte", body: "Mi abuela compro Bitcoin en 2009 para comprar pizza. Ahora tiene su propia isla. Simplemente hodlea y no pienses." },
+        { emoji: "📉", title: "Compra la caida", body: "Cuando baja un 40% es momento de comprar. Cuando sube un 40% tambien. En realidad compra siempre, nunca vendas." },
+        { emoji: "🏦", title: "Tu banco te odia", body: "Los bancos no quieren que sepas este truco: guarda tus ahorros en Bitcoin y duerme exactamente 0 horas por la volatilidad." },
+        { emoji: "🔮", title: "Analisis tecnico", body: "El precio va a subir... o bajar. El triangulo del grafico apunta en alguna direccion. Las estrellas estan alineadas, creo." },
+      ],
+      eth: [
+        { emoji: "🧪", title: "DeFi es el futuro", body: "Pon todos tus ETH en un protocolo con un nombre random de 4 letras. APY del 9000%. Totalmente seguro." },
+        { emoji: "⛽", title: "Las gas fees", body: "Pagar $200 en gas para mover $10 es perfectamente normal. Esto es la revolucion financiera que esperabamos." },
+        { emoji: "🎨", title: "Compra un NFT", body: "Un jpeg de un mono aburrido es exactamente la reserva de valor que tu portafolio necesitaba. Confia." },
+        { emoji: "📜", title: "Smart Contracts", body: "Despliega un smart contract. Si algo sale mal, recuerda que el codigo es ley, y la ley a veces pierde tu dinero." },
+      ],
+      sol: [
+        { emoji: "⚡", title: "Velocidad = Precio", body: "Solana procesa 65,000 transacciones por segundo. Eso significa que perderás tu dinero 65,000 veces mas rapido." },
+        { emoji: "🌅", title: "La nueva Ethereum", body: "Todo el mundo dice que X es la nueva Ethereum. Solana, Cardano, mi vecino con una whitepaper de 3 paginas..." },
+        { emoji: "🎰", title: "Memecoins en Solana", body: "Si compras suficientes memecoins de perros en Solana, estadisticamente uno tiene que subir 1000x. Es matematica basica." },
+        { emoji: "🤝", title: "Confia en el ecosistema", body: "El equipo es increible, el roadmap es solido, el precio solo puede subir. (El equipo tambien dijo esto en 2022.)" },
+      ],
+    };
+
+    function showTip(coin) {
+      const list = tips[coin];
+      const tip = list[Math.floor(Math.random() * list.length)];
+      document.getElementById("modal-emoji").textContent = tip.emoji;
+      document.getElementById("modal-title").textContent = tip.title;
+      document.getElementById("modal-body").textContent = tip.body;
+      document.getElementById("overlay").classList.add("active");
+    }
+
+    function closeOverlay() {
+      document.getElementById("overlay").classList.remove("active");
+    }
+
+    function closeModal(e) {
+      if (e.target === document.getElementById("overlay")) closeOverlay();
+    }
+
+    document.addEventListener("keydown", e => {
+      if (e.key === "Escape") closeOverlay();
+    });
+  </script>
+</body>
+</html>
