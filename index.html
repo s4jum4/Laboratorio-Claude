@@ -9,7 +9,7 @@
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
     :root {
-      --bg:        #07070e;
+      --bg:        #020818;
       --glow-a:    #ff1f6e;
       --glow-b:    #c0001e;
       --glow-c:    #6600aa;
@@ -164,6 +164,10 @@
       background: var(--accent);
       box-shadow: 0 0 6px var(--accent);
     }
+    @keyframes pulse-title {
+      0%, 100% { opacity: 1; }
+      50%       { opacity: 0.45; }
+    }
     header h1 {
       font-size: clamp(2.2rem, 5vw, 3.4rem);
       font-weight: 700;
@@ -173,6 +177,7 @@
       -webkit-background-clip: text;
       -webkit-text-fill-color: transparent;
       background-clip: text;
+      animation: pulse-title 2.8s ease-in-out infinite;
     }
     header p {
       color: var(--muted);
